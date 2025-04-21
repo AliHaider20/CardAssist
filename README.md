@@ -115,12 +115,13 @@ async def activate_card(card_number: str) -> str:
 
 ⸻
 
-🔮 Future Enhancements
-🧠 Integrate Azure AI Search for advanced RAG indexing
-🧑‍💻 Add Gradio/Streamlit-based UI for user interaction ✅
-🔐 Implement masking for sensitive card numbers
-📊 Add more card management capabilities (e.g., limit changes, billing FAQs)
-☁️ Deploy as an Azure Web App or RESTful API
+## 🔮 Future Enhancements
+
+- 🧠 Integrate Azure AI Search for advanced RAG indexing  
+- ✅ 🧑‍💻 Add Gradio/Streamlit-based UI for user interaction  
+- 🔐 Implement masking for sensitive card numbers  
+- 📊 Add more card management capabilities (e.g., limit changes, billing FAQs)  
+- ☁️ Deploy as an Azure Web App or RESTful API  
 
 ⸻
 
