@@ -103,22 +103,24 @@ User: “Steps for First-time Registration for Corporate Accounts”
 
 ⸻
 
-📦 Dependencies
-	•	semantic-kernel
-	•	langchain
-	•	sentence-transformers
-	•	faiss-cpu
-	•	torch
-	•	PyPDFLoader
-	•	tqdm
-	•	dotenv
-	•	asyncio, nest_asyncio (for Jupyter async compatibility)
+### 📦 Dependencies
 
-⸻
+- semantic-kernel
+- langchain
+- sentence-transformers
+- faiss-cpu
+- torch
+- PyPDFLoader
+- tqdm
+- dotenv
+- asyncio, nest_asyncio (for Jupyter async compatibility)
 
-🔮 Future Enhancements
-	•	🧠 Integrate Azure AI Search for advanced RAG indexing
-	•	✅ 🧑‍💻 Add Gradio/Streamlit-based UI for user interaction
-	•	🔐 Implement masking for sensitive card numbers
-	•	📊 Add more card management capabilities (e.g., limit changes, billing FAQs)
-	•	☁️ Deploy as an Azure Web App or RESTful API
+---
+
+### 🔮 Future Enhancements
+
+- 🧠 Integrate Azure AI Search for advanced RAG indexing
+- ✅ 🧑‍💻 Add Gradio/Streamlit-based UI for user interaction
+- 🔐 Implement masking for sensitive card numbers
+- 📊 Add more card management capabilities (e.g., limit changes, billing FAQs)
+- ☁️ Deploy as an Azure Web App or RESTful API
