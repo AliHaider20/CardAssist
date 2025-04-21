@@ -5,13 +5,14 @@ Designed to be modular and extensible, it enables conversational, grounded assis
 
 ⸻
 
-🚀 Features
-	•	✅ Natural Language Activation/Deactivation of credit cards
-	•	🔍 RAG-powered Q&A using semantic embeddings from PDF guides
-	•	⚙️ Semantic Kernel Plugins orchestrating skillful agent responses
-	•	⚡ FAISS-based Vector Search for fast and efficient retrieval
-	•	📄 PDF Ingestion via Langchain + Sentence Transformers
-	•	🧠 Context-Aware Prompting to maintain coherent and helpful replies
+### 🚀 Features
+
+- ✅ Natural Language Activation/Deactivation of credit cards  
+- 🔍 RAG-powered Q&A using semantic embeddings from PDF guides  
+- ⚙️ Semantic Kernel Plugins orchestrating skillful agent responses  
+- ⚡ FAISS-based Vector Search for fast and efficient retrieval  
+- 📄 PDF Ingestion via Langchain + Sentence Transformers  
+- 🧠 Context-Aware Prompting to maintain coherent and helpful replies  
 
 ⸻
 
