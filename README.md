@@ -102,16 +102,16 @@ async def activate_card(card_number: str) -> str:
 
 ⸻
 
-📦 Dependencies
-	•	semantic-kernel
-	•	langchain
-	•	sentence-transformers
-	•	faiss-cpu
-	•	torch
-	•	PyPDFLoader
-	•	tqdm
-	•	dotenv
-	•	asyncio, nest_asyncio (for Jupyter async compatibility)
+## 📦 Dependencies
+ - semantic-kernel
+ - langchain
+ - sentence-transformers
+ - faiss-cpu
+ - torch
+ - PyPDFLoader
+ - tqdm
+ - dotenv
+ - asyncio, nest_asyncio (for Jupyter async compatibility)
 
 ⸻
 
