@@ -59,21 +59,18 @@ Open CardAssist.ipynb in JupyterLab or VSCode and follow the execution cells.
 
 ⸻
 
-🔧 Core Components
+### 🔧 Core Components
 
-🔹 Embedding & Indexing
-	•	Uses sentence-transformers/all-MiniLM-L6-v2 for PDF chunk embedding
-	•	Embedded chunks are indexed using FAISS for similarity search
+#### 🔹 Embedding & Indexing
 
-🔹 Semantic Kernel Plugins
+- Uses `sentence-transformers/all-MiniLM-L6-v2` for PDF chunk embedding  
+- Embedded chunks are indexed using FAISS for similarity search  
 
+#### 🔹 Semantic Kernel Plugins
+
+```python
 @kernel_function
 async def activate_card(card_number: str) -> str:
-
-	•	Custom functions for activation, deactivation, and PDF-based queries
-
-🔹 Azure OpenAI Integration
-	•	Integrated with AzureChatCompletion using gpt-4o-mini model
 
 ⸻
 
