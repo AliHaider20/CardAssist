@@ -16,13 +16,16 @@ Designed to be modular and extensible, it enables conversational, grounded assis
 
 ---
 
+
 ### 📁 Project Structure
 
+```text
 CardAssist/
-├── global_card_access_user_guide.pdf   # PDF used for RAG
+├── global_card_access_user_guide.pdf   
 ├── CardAssist.ipynb                    # Main pipeline (Jupyter Notebook)
-├── .env                                # Environment variables (not committed)
-└── README.md                           # You’re here!
+├── .env                                
+└── README.md                           
+```
 
 ---
 
