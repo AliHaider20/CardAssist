@@ -1,7 +1,3 @@
-Here’s a polished and informative README.md you can use for your GitHub repo for the CardAssist project:
-
-⸻
-
 💳 CardAssist: Multi-Agent Credit Card Assistant using Semantic Kernel
 
 CardAssist is a multi-agent AI assistant that leverages Semantic Kernel, OpenAI, and Retrieval-Augmented Generation (RAG) to perform intelligent credit card management tasks like activation, deactivation, and natural language Q&A from a PDF-based user guide.
