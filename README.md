@@ -6,12 +6,12 @@ It’s designed to be easily extensible, enabling conversational, grounded assis
 ⸻
 
 🚀 Features
-	•	✅ Activate/Deactivate Credit Cards using natural language
-	•	🔍 RAG-based QA using embeddings from PDF user guides
-	•	⚙️ Powered by Semantic Kernel Plugins & Azure OpenAI
-	•	⚡ Vector Search via FAISS
-	•	📄 PDF ingestion with Langchain + Sentence Transformers
-	•	🧠 Context-aware system prompt for consistent, helpful replies
+	-	✅ Activate/Deactivate Credit Cards using natural language
+	-	🔍 RAG-based QA using embeddings from PDF user guides
+	-	⚙️ Powered by Semantic Kernel Plugins & Azure OpenAI
+	-	⚡ Vector Search via FAISS
+	-	📄 PDF ingestion with Langchain + Sentence Transformers
+	-	🧠 Context-aware system prompt for consistent, helpful replies
 
 ⸻
 
@@ -19,7 +19,7 @@ It’s designed to be easily extensible, enabling conversational, grounded assis
 
 CardAssist/
 ├── global_card_access_user_guide.pdf   # PDF used for RAG
-├── main.ipynb                          # Jupyter Notebook for full pipeline
+├── CardAssist.ipynb                          # Jupyter Notebook for full pipeline
 ├── .env                                # Environment variables (not committed)
 └── README.md
 
@@ -47,17 +47,19 @@ pip install -r requirements.txt
 AI_FOUNDRY_MODEL_API=your_openai_or_foundry_key
 LLM_ENDPOINT=https://your-openai-endpoint
 AI_SEARCH_API=your_search_api_key
+EMBEDDING_ENDPOINT=your_openai_or_foundry_embedding_key
+
 
 	5.	Run the Notebook
-Open main.ipynb in JupyterLab or VSCode and follow through the cells.
+Open CardAssist.ipynb in JupyterLab or VSCode and follow through the cells.
 
 ⸻
 
 🔧 Core Components
 
 🔹 Embedding & Indexing
-	•	Uses sentence-transformers/all-MiniLM-L6-v2 to embed PDF content.
-	•	Chunks indexed with FAISS for fast similarity search.
+	-	Uses sentence-transformers/all-MiniLM-L6-v2 to embed PDF content.
+	-	Chunks indexed with FAISS for fast similarity search.
 
 🔹 Semantic Kernel Plugins
 
@@ -67,7 +69,7 @@ async def activate_card(card_number: str) -> str
 Custom functions for activating/deactivating cards and handling RAG-based queries.
 
 🔹 Azure OpenAI Integration
-	•	Uses AzureChatCompletion with GPT-4o (gpt-4o-mini) via Semantic Kernel.
+	-	Uses AzureChatCompletion with GPT-4o (gpt-4o-mini) via Semantic Kernel.
 
 ⸻
 
@@ -96,23 +98,24 @@ Response: To register as a new user for a corporate account, follow these steps.
 ⸻
 
 📌 Dependencies
-	•	semantic-kernel
-	•	langchain
-	•	sentence-transformers
-	•	faiss-cpu
-	•	torch
-	•	PyPDFLoader
-	•	tqdm
-	•	dotenv
-	•	asyncio, nest_asyncio (for Jupyter async compatibility)
+	-	semantic-kernel
+	-	langchain
+	-	sentence-transformers
+	-	faiss-cpu
+	-	torch
+	-	PyPDFLoader
+	-	tqdm
+	-	dotenv
+	-	asyncio, nest_asyncio (for Jupyter async compatibility)
 
 ⸻
 
 📈 Future Enhancements
-	•	✅ Add Gradio/Streamlit-based Chat UI
-	•	🔐 Mask sensitive card numbers in output
-	•	🧩 Add more card-related management functions (limit changes, billing FAQs)
-	•	☁️ Deploy as Azure Web App or API endpoint
+	-	✅ Add Gradio/Streamlit-based Chat UI
+	-	🔐 Mask sensitive card numbers in output
+	-	🧩 Add more card-related management functions (limit changes, billing FAQs)
+	-	☁️ Deploy as Azure Web App or API endpoint
+
 
 ⸻
 
