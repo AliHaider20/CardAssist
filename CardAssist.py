@@ -90,7 +90,7 @@ def setup_kernel(faiss_index, docs):
 
     # Setup Azure OpenAI
     model_id = "gpt-4o-mini"
-    llm_endpoint = "https://ai-haiderratlamwala786782368ai465180038500.openai.azure.com/openai/deployments/gpt-4o-mini/chat/completions?api-version=2025-01-01-preview"
+    llm_endpoint = os.getenv("LLM_ENDPOINT")
     api_key = os.getenv("AI_FOUNDRY_MODEL_API")
 
     # Add the Azure OpenAI chat completion service
