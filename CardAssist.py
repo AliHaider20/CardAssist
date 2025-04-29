@@ -1,8 +1,8 @@
+# app.py
 import asyncio
 import os
 import streamlit as st
 from dotenv import load_dotenv
-from tqdm import tqdm
 import faiss
 import numpy as np
 import tempfile
@@ -10,6 +10,7 @@ import tempfile
 from sentence_transformers import SentenceTransformer
 from langchain.text_splitter import MarkdownTextSplitter
 from langchain_community.document_loaders import PyPDFLoader
+import torch
 
 from semantic_kernel import Kernel
 from semantic_kernel.connectors.ai.open_ai import AzureChatCompletion
@@ -28,196 +29,155 @@ search_endpoint = "https://cardassist.search.windows.net"
 ai_foundry_api = os.getenv("AI_FOUNDRY_MODEL_API")
 llm_endpoint = os.getenv("LLM_ENDPOINT")
 
-# Initialize embedding model globally
-embedding_service = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+device = "mps" if torch.backends.mps.is_available() else "cpu"
+
+embedding_service = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2', device)
+
+st.set_page_config(page_title="💳 Credit Card Assistant", layout="wide")
+st.title("💳 Credit Card Assistant")
 
 # Session state initialization
-if "kernel" not in st.session_state:
-    st.session_state.kernel = None
-if "chat_history" not in st.session_state:
-    st.session_state.chat_history = []
-if "faiss_index" not in st.session_state:
-    st.session_state.faiss_index = None
-if "docs" not in st.session_state:
-    st.session_state.docs = []
-if "loading" not in st.session_state:
-    st.session_state.loading = False
-if "error" not in st.session_state:
-    st.session_state.error = ""
+for key, default in {
+    "kernel": None,
+    "chat_history": [],
+    "faiss_index": None,
+    "docs": [],
+    "loading": False,
+    "error": "",
+}.items():
+    if key not in st.session_state:
+        st.session_state[key] = default
 
-# PDF processing functions
-async def load_and_process_pdf_async(pdf_path: str) -> List[str]:
-    try:
-        loader = PyPDFLoader(pdf_path)
-        documents = loader.load()
-        text_splitter = MarkdownTextSplitter(chunk_size=300, chunk_overlap=30)
-        md_docs = text_splitter.split_documents(documents)
-        md_docs = [doc.page_content for doc in md_docs]
-        return md_docs
-    except Exception as e:
-        raise RuntimeError(f"Failed to process PDF: {e}")
+system_prompt = "You're a helpful assistant that can answer questions about credit card management, including activating and deactivating cards, and providing information about card features and account management. Make sure you provide accurate and well structured information based on the provided context."
 
-def generate_embeddings(docs: List[str]) -> np.ndarray:
-    embeddings = []
-    for doc in tqdm(docs, desc="Generating embeddings"):
-        emb = embedding_service.encode([doc])
-        embeddings.append(emb[0])
-    return np.array(embeddings).astype("float32")
-
-def create_faiss_index(embeddings: np.ndarray):
-    index = faiss.IndexFlatL2(embeddings.shape[1])
-    index.add(embeddings)
-    return index
-
-# Credit Card Plugin for Semantic Kernel
 class CreditCardPlugin:
     def __init__(self, faiss_index, docs):
         self.index = faiss_index
         self.docs = docs
 
-    @kernel_function(description="Deactivate a credit card; returns a confirmation message")
-    async def deactivate_card(self, card_number: Annotated[str, "The credit card number to deactivate"]) -> str:
-        print("Function called to deactivate card")
+    @kernel_function(description="Deactivate a credit card")
+    async def deactivate_card(self, card_number: Annotated[str, "Card number to deactivate"]):
         return f"Credit card {card_number} has been deactivated."
 
-    @kernel_function(description="Activate a credit card; returns a confirmation message")
-    async def activate_card(self, card_number: Annotated[str, "The credit card number to activate"]) -> str:
-        print("Function called to activate card")
+    @kernel_function(description="Activate a credit card")
+    async def activate_card(self, card_number: Annotated[str, "Card number to activate"]):
         return f"Credit card {card_number} has been activated."
 
-    @kernel_function(description="Get card information and other general information about the card and account management")
-    async def rag_query(self, query: Annotated[str, "The user query for RAG (Retrieval-Augmented Generation)"]) -> str:
-        print("Function called for RAG query")
+    @kernel_function(description="Retrieve relevant card info using RAG")
+    async def rag_query(self, query: Annotated[str, "Query for RAG"]):
+        if self.index is None or not self.docs:
+            return "No PDF data available for RAG search."
         query_embedding = embedding_service.encode([query]).astype("float32")
         distances, indices = self.index.search(query_embedding, k=5)
         relevant_chunks = [self.docs[i] for i in indices[0]]
         context = "\n".join(relevant_chunks)
         return f"{context}\n\nUser Query: {query}"
 
-# Setup Semantic Kernel
-def setup_kernel(faiss_index, docs):
-    model_id = "gpt-4o-mini"
+def setup_kernel(faiss_index=None, docs=None):
     kernel = Kernel()
-    kernel.add_service(
-        AzureChatCompletion(
-            deployment_name=model_id,
-            endpoint=llm_endpoint,
-            api_key=ai_foundry_api
-        )
-    )
+    kernel.add_service(AzureChatCompletion(deployment_name="gpt-4o-mini", endpoint=llm_endpoint, api_key=ai_foundry_api))
     kernel.add_plugin(CreditCardPlugin(faiss_index, docs), plugin_name="CreditCard")
     return kernel
 
-# Chat handling
+async def load_and_process_pdf_async(pdf_path: str) -> List[str]:
+    loader = PyPDFLoader(pdf_path)
+    documents = loader.load()
+    splitter = MarkdownTextSplitter(chunk_size=300, chunk_overlap=30)
+    return [doc.page_content for doc in splitter.split_documents(documents)]
+
+def generate_embeddings(docs: List[str]) -> np.ndarray:
+    return np.array(embedding_service.encode(docs)).astype("float32")
+
+def create_faiss_index(embeddings: np.ndarray):
+    index = faiss.IndexFlatL2(embeddings.shape[1])
+    index.add(embeddings)
+    return index
+
 async def process_message(message: str) -> str:
     kernel: Kernel = st.session_state.kernel
-    if kernel is None:
-        return "System is not ready. Please upload a PDF first."
-
-    arguments = KernelArguments(
-        settings=AzureChatPromptExecutionSettings(
-            function_choice_behavior=FunctionChoiceBehavior.Auto(),
-            top_p=0.9,
-            temperature=0,
-        )
-    )
+    if not kernel:
+        # If kernel is not ready, initialize minimal kernel (only for activation/deactivation)
+        kernel = setup_kernel()
+        st.session_state.kernel = kernel
 
     try:
-        response = await kernel.invoke_prompt(message, arguments=arguments)
+        args = KernelArguments(
+            settings=AzureChatPromptExecutionSettings(
+                function_choice_behavior=FunctionChoiceBehavior.Auto(),
+                top_p=0.9, temperature=0,
+            )
+        )
+        final_prompt = f"{system_prompt}\n\n{message}"
+        response = await kernel.invoke_prompt(final_prompt, arguments=args)
         return response.value[0].content
     except Exception as e:
         return f"Error: {str(e)}"
 
-# Handle PDF upload
 async def handle_pdf_upload(file):
     st.session_state.loading = True
-    st.session_state.error = ""
     try:
-        if file is not None:
-            temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
-            temp_file.write(file.read())
-            temp_file.flush()
-
-            docs = await load_and_process_pdf_async(temp_file.name)
-            embeddings = generate_embeddings(docs)
-            index = create_faiss_index(embeddings)
-
-            st.session_state.docs = docs
-            st.session_state.faiss_index = index
-            st.session_state.kernel = setup_kernel(index, docs)
-
-            st.success("PDF loaded and system initialized successfully!")
+        if file:
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_file:
+                temp_file.write(file.read())
+                docs = await load_and_process_pdf_async(temp_file.name)
+                embeddings = generate_embeddings(docs)
+                index = create_faiss_index(embeddings)
+                st.session_state.update({
+                    "docs": docs,
+                    "faiss_index": index,
+                    "kernel": setup_kernel(index, docs)
+                })
+                st.success("PDF loaded, now you can ask quesions about card activation, deactivation, or information about cards!")
         else:
-            st.session_state.error = "Please upload a valid PDF."
+            st.warning("Please upload a PDF.")
     except Exception as e:
-        st.session_state.error = str(e)
+        st.error(str(e))
     finally:
         st.session_state.loading = False
 
-# Main Streamlit app
-st.set_page_config(page_title="Credit Card Assistant", layout="wide")
-st.title("💳 Credit Card Assistant")
-st.markdown("Ask about activating, deactivating cards, or general queries!")
-
-# Sidebar for PDF Upload
+# Sidebar PDF Upload
 with st.sidebar:
-    st.header("Upload PDF Guide")
-    uploaded_pdf = st.file_uploader("Upload your PDF document", type=["pdf"])
-    if st.button("Load PDF"):
-        if uploaded_pdf is not None:
+    st.header("📄 Upload PDF Guide")
+    uploaded_pdf = st.file_uploader("Upload PDF", type=["pdf"])
+    if st.button("🔄 Load PDF"):
+        if uploaded_pdf:
             asyncio.run(handle_pdf_upload(uploaded_pdf))
         else:
-            st.warning("Please upload a PDF file first!")
+            st.warning("Upload a file first.")
 
-    st.divider()
-    st.header("Quick Actions")
-    card_number = st.text_input("Card Number", placeholder="XXXX-XXXX-XXXX-XXXX")
-
-    if st.button("Activate Card"):
-        if card_number:
-            user_message = f"Activate card {card_number}"
-            st.session_state.chat_history.append(("user", user_message))
-        else:
-            st.warning("Please enter a card number.")
-
-    if st.button("Deactivate Card"):
-        if card_number:
-            user_message = f"Deactivate card {card_number}"
-            st.session_state.chat_history.append(("user", user_message))
-        else:
-            st.warning("Please enter a card number.")
-
-# Main chat area
-if st.session_state.error:
-    st.error(st.session_state.error)
-
-user_input = st.text_input("Ask a question", key="input")
-
-# Handle user sending a message
-if st.button("Send"):
-    if user_input:
-        st.session_state.chat_history.append(("user", user_input))
-        st.session_state.user_just_sent = True  # track sending
-
-# Process user's latest message if needed
-if st.session_state.get("user_just_sent", False):
-    if st.session_state.chat_history and st.session_state.chat_history[-1][0] == "user":
-        with st.spinner("Thinking..."):
-            latest_message = st.session_state.chat_history[-1][1]
-            response = asyncio.run(process_message(latest_message))
-            st.session_state.chat_history.append(("assistant", response))
-    st.session_state.user_just_sent = False  # reset
-
-# Display full chat history
-for role, message in st.session_state.chat_history:
-    if role == "user":
-        st.chat_message("user").markdown(message)
-    else:
-        st.chat_message("assistant").markdown(message)
-
-# Processing new messages
-if st.session_state.chat_history and st.session_state.chat_history[-1][0] == "user":
+# Chat UI
+st.divider()
+user_input = st.chat_input("Ask a question about card activation, deactivation, or info...")
+if user_input:
+    st.session_state.chat_history.append(("user", user_input))
     with st.spinner("Thinking..."):
-        user_message = st.session_state.chat_history[-1][1] if isinstance(st.session_state.chat_history[-1], tuple) else st.session_state.chat_history[-1]
-        response = asyncio.run(process_message(user_message))
+        response = asyncio.run(process_message(user_input))
         st.session_state.chat_history.append(("assistant", response))
+
+# Show chat history
+for role, msg in st.session_state.chat_history:
+    st.chat_message(role).markdown(msg)
+
+st.divider()
+st.subheader("🔧 Quick Actions")
+
+card_number = st.text_input("Enter Card Number", key="card_number_input")
+col1, col2 = st.columns(2)
+
+with col1:
+    if st.button("✅ Activate Card"):
+        if card_number:
+            with st.spinner("Activating card..."):
+                response = asyncio.run(process_message(f"Activate card {card_number}"))
+                st.success(f"Card {card_number} activated successfully! ✅")
+        else:
+            st.warning("Please enter a card number.")
+
+with col2:
+    if st.button("🛑 Deactivate Card"):
+        if card_number:
+            with st.spinner("Deactivating card..."):
+                response = asyncio.run(process_message(f"Deactivate card {card_number}"))
+                st.success(f"Card {card_number} deactivated successfully! 🛑")
+        else:
+            st.warning("Please enter a card number.")
